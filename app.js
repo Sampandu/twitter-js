@@ -6,6 +6,7 @@ const routes = require('./routes');
 const path = require('path');
 const volleyball = require('volleyball');
 const bodyParser = require('body-parser');
+const socketio = require('socket.io'); //With sockets, the server can signal clients without waiting for a request.
 
 const app = express(); //// creates an instance of an express application
 
@@ -18,11 +19,15 @@ nunjucks.configure('views', {noCache: true}); // point nunjucks to the proper di
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
+
+
+let server = app.listen(3000, ()=>{console.log('listening on port 3000.')});
+let io = socketio.listen(server);
+
 // app.use(morgan('dev'));
 app.use(volleyball);
-app.use('/', routes);
+app.use('/', routes(io));
 app.use(express.static(path.join(__dirname, '/public'))); //这里需要先npm install path --save,
 														  // .static可将public里的静态文件名自动当作identifier，request可以在url发出访问
 
 
-app.listen(3000, ()=>console.log('server is working'));

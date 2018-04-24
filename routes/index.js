@@ -4,13 +4,17 @@ const express = require('express');
 const router = express.Router();
 const tweetBank = require('../tweetBank');
 
-router.get('/', function(req, res){
-	let allOfTweets = tweetBank.list();
-	res.render('index', { 
-		tweets: allOfTweets,
-		showForm: true
+
+
+module.exports = function(io) {
+
+	router.get('/', function(req, res){
+		let allOfTweets = tweetBank.list();
+		res.render('index', { 
+			tweets: allOfTweets,
+			showForm: true
+		});
 	});
-});
 
 
 // single-user page
@@ -24,30 +28,31 @@ router.get('/', function(req, res){
   //   });
   // });
 
-router.get('/users/:name', (req, res) => {
-	let name = req.params.name;
-	let tweetsForName = tweetBank.find({name: name});
-	res.render('index', {
-		tweets: tweetsForName,
-		showForm: true,
-		userName: req.params.name
+	router.get('/users/:name', (req, res) => {
+		let name = req.params.name;
+		let tweetsForName = tweetBank.find({name: name});
+		res.render('index', {
+			tweets: tweetsForName,
+			showForm: true,
+			userName: req.params.name
+		});
 	});
-});
 
-router.get('/tweets/:id', (req, res, next) => {
-	console.log(req.params);
-	let tweetsForId = tweetBank.find({id: Number(req.params.id)}); //req.params返回的是字符串‘1’，‘2’...
-	res.render('index', {
-		tweets: tweetsForId
+	router.get('/tweets/:id', (req, res, next) => {
+		console.log(req.params);
+		let tweetsForId = tweetBank.find({id: Number(req.params.id)}); //req.params返回的是字符串‘1’，‘2’...
+		res.render('index', {
+			tweets: tweetsForId
+		});
 	});
-});
 
-router.post('/tweets', (req, res, next)=>{
-	let name = req.body.name;
-	let text = req.body.text;
-	tweetBank.add(name, text);
-	res.redirect('/');
-});
+	router.post('/tweets', (req, res, next)=>{
+		let name = req.body.name;
+		let text = req.body.text;
+		const newTweet = tweetBank.add(name, text);
+		io.sockets.emit('new_tweet', newTweet);
+		res.redirect('/');
+	});
 
 
 
@@ -56,4 +61,5 @@ router.post('/tweets', (req, res, next)=>{
 // 	res.sendFile('/stylesheets/style.css', { root: __dirname + '/../public/'});
 // });  
 
-module.exports = router;
+	return router;
+};
